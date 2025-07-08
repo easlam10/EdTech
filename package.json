@@ -1,0 +1,37 @@
+{
+  "name": "edtech-news-aggregator",
+  "version": "1.0.0",
+  "description": "An automated tool that fetches, summarizes, and delivers educational technology news updates via WhatsApp",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "edtech",
+    "news",
+    "aggregator",
+    "whatsapp",
+    "gemini",
+    "ai",
+    "puppeteer",
+    "scraping"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@google/generative-ai": "^0.2.0",
+    "axios": "^1.6.0",
+    "cheerio": "^1.0.0-rc.12",
+    "dotenv": "^16.3.1",
+    "puppeteer": "^21.5.0",
+    "twilio": "^4.19.0"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  }
+}
