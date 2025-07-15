@@ -1,132 +1,171 @@
-const twilio = require("twilio");
+const axios = require("axios");
 require("dotenv").config();
 
-// Initialize Twilio client
-let client;
-try {
-  client = twilio(
-    process.env.TWILIO_ACCOUNT_SID,
-    process.env.TWILIO_AUTH_TOKEN
-  );
-} catch (error) {
-  console.warn("Warning: Failed to initialize Twilio client:", error.message);
-}
-
 /**
- * Extracts clean domain names from URLs
- * @param {string} url - The URL to process
- * @returns {string} - Clean domain name
+ * Extracts bullet points and their sources from the summary
+ * @param {string} summary - The summary text with bullet points and sources
+ * @returns {Object} - Object containing date and extracted points with links
  */
-function extractDomainName(url) {
-  try {
-    const urlObj = new URL(url);
-    // Get domain without subdomain like www
-    let domain = urlObj.hostname.replace(/^www\./i, "");
-    return domain;
-  } catch (error) {
-    return url; // Return original if parsing fails
-  }
-}
-
-/**
- * Formats an array of article summaries into a single message
- * @param {Array<Object>} articles - Array of articles with summaries
- * @returns {string} - Formatted message
- */
-function formatMessage(articles) {
-  if (!articles || articles.length === 0) {
-    return "No EdTech news found.";
+function extractPointsAndSources(summary) {
+  if (!summary) {
+    return null;
   }
 
-  // Get current date for the daily update
   const today = new Date();
-  const dateFormatted = today.toLocaleDateString("en-US", {
+  const date = today.toLocaleDateString("en-US", {
     weekday: "long",
     month: "long",
     day: "numeric",
     year: "numeric",
   });
 
-  // Since all articles now have the same summary (we consolidated them),
-  // we'll just use the first article's summary
-  const summary = articles[0].summary;
+  // Split by bullet points (lines starting with *)
+  const lines = summary.split("\n");
+  const points = [];
+  const links = [];
 
-  // Build the header and message
-  let message = `📱 *EDTECH UPDATE* 📱\n*${dateFormatted}*\n\n`;
-  message += summary + "\n";
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
 
-  // No need to add the separate source list since sources are now included with each bullet point
+    // If this is a bullet point
+    if (line.startsWith("*")) {
+      points.push(line.substring(2).trim()); // Remove the "* " prefix
 
-  return message;
+      // Look for the source in the next line or two
+      let foundSource = false;
+
+      // Check next two lines for source
+      for (let j = 1; j <= 2; j++) {
+        if (i + j < lines.length) {
+          const nextLine = lines[i + j].trim();
+          if (nextLine.startsWith("Source:")) {
+            // Extract URL from the source line
+            const sourceMatch = nextLine.match(
+              /Source:\s+\[?(https?:\/\/[^\s\]]+)/
+            );
+            if (sourceMatch && sourceMatch[1]) {
+              links.push(sourceMatch[1]);
+              foundSource = true;
+              break;
+            }
+          }
+        }
+      }
+
+      if (!foundSource) {
+        links.push("");
+      }
+    }
+  }
+
+  // Ensure we have exactly 8 points and links (pad with non-empty strings if needed)
+  while (points.length < 8)
+    points.push("No additional EdTech updates available");
+  while (links.length < 8) links.push("No source available");
+
+  // Truncate if more than 8
+  const result = {
+    date,
+    first_point: points[0].substring(0, 1000),
+    first_link: links[0],
+    second_point: points[1].substring(0, 1000),
+    second_link: links[1],
+    third_point: points[2].substring(0, 1000),
+    third_link: links[2],
+    fourth_point: points[3].substring(0, 1000),
+    fourth_link: links[3],
+    fifth_point: points[4].substring(0, 1000),
+    fifth_link: links[4],
+    sixth_point: points[5].substring(0, 1000),
+    sixth_link: links[5],
+    seventh_point: points[6].substring(0, 1000),
+    seventh_link: links[6],
+    eigth_point: points[7].substring(0, 1000),
+    eigth_link: links[7],
+  };
+
+  return result;
 }
 
 /**
- * Sends a WhatsApp message via Twilio
- * @param {string} message - The message to send
+ * Sends a WhatsApp message via Meta Cloud API
+ * @param {Object} templateData - The data to populate the template
  * @returns {Promise<Object>} - Result of the sending operation
  */
-async function sendWhatsAppMessage(message) {
+async function sendWhatsAppMessage(templateData) {
   try {
     // Always output the formatted message to console for testing/backup
-    console.log("\n========= FORMATTED MESSAGE =========");
-    console.log(message);
+    console.log("\n========= TEMPLATE DATA =========");
+    console.log(JSON.stringify(templateData, null, 2));
     console.log("===================================\n");
 
-    // Check if Twilio is configured
+    // Check if Meta Cloud API is configured
     if (
-      !process.env.TWILIO_ACCOUNT_SID ||
-      !process.env.TWILIO_AUTH_TOKEN ||
-      !process.env.TWILIO_PHONE_NUMBER ||
-      !process.env.RECIPIENT_PHONE_NUMBER
+      !process.env.WHATSAPP_TOKEN ||
+      !process.env.WHATSAPP_PHONE_NUMBER_ID ||
+      !process.env.WHATSAPP_RECIPIENT_NUMBER
     ) {
       console.warn(
-        "Twilio environment variables not fully configured. Message not sent."
+        "Meta Cloud API environment variables not fully configured. Message not sent."
       );
       return { status: "not_sent", reason: "configuration_missing" };
     }
 
-    // Check if client was initialized
-    if (!client) {
-      console.warn("Twilio client not initialized. Message not sent.");
-      return { status: "not_sent", reason: "client_not_initialized" };
-    }
+    const url = `https://graph.facebook.com/v23.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
 
-    // Ensure message is within WhatsApp's character limit
-    const MAX_LENGTH = 1600;
-    let messageToSend = message;
+    // Parameters must be in the exact order they appear in the template
+    // Without the name property - just using type and text as per API requirements
+    const parameters = [
+      { type: "text", text: templateData.date },
+      { type: "text", text: templateData.first_point },
+      { type: "text", text: templateData.first_link },
+      { type: "text", text: templateData.second_point },
+      { type: "text", text: templateData.second_link },
+      { type: "text", text: templateData.third_point },
+      { type: "text", text: templateData.third_link },
+      { type: "text", text: templateData.fourth_point },
+      { type: "text", text: templateData.fourth_link },
+      { type: "text", text: templateData.fifth_point },
+      { type: "text", text: templateData.fifth_link },
+      { type: "text", text: templateData.sixth_point },
+      { type: "text", text: templateData.sixth_link },
+      { type: "text", text: templateData.seventh_point },
+      { type: "text", text: templateData.seventh_link },
+      { type: "text", text: templateData.eigth_point },
+      { type: "text", text: templateData.eigth_link },
+    ];
 
-    if (message.length > MAX_LENGTH) {
-      // Truncate if necessary rather than splitting
-      messageToSend = message.substring(0, MAX_LENGTH - 3) + "...";
-      console.warn(
-        `Message too long (${message.length} chars), truncated to ${messageToSend.length} chars`
-      );
-    }
+    const payload = {
+      messaging_product: "whatsapp",
+      to: process.env.WHATSAPP_RECIPIENT_NUMBER,
+      type: "template",
+      template: {
+        name: "edtech_alerts",
+        language: { code: "en_US" },
+        components: [
+          {
+            type: "body",
+            parameters: parameters,
+          },
+        ],
+      },
+    };
 
     try {
-      const result = await client.messages.create({
-        from: `whatsapp:${process.env.TWILIO_PHONE_NUMBER}`,
-        body: messageToSend,
-        to: `whatsapp:${process.env.RECIPIENT_PHONE_NUMBER}`,
+      const response = await axios.post(url, payload, {
+        headers: {
+          Authorization: `Bearer ${process.env.WHATSAPP_TOKEN}`,
+          "Content-Type": "application/json",
+        },
       });
-
-      console.log(`Message sent with SID: ${result.sid}`);
-      return result;
-    } catch (twilioError) {
-      console.error("Twilio API Error:", twilioError.message);
-
-      // Check for network connectivity issues
-      if (
-        twilioError.message.includes("EAI_AGAIN") ||
-        twilioError.message.includes("ENOTFOUND") ||
-        twilioError.message.includes("ETIMEDOUT")
-      ) {
-        console.error(
-          "Network connectivity issue detected. Please check your internet connection."
-        );
-      }
-
-      throw twilioError;
+      console.log("✅ WhatsApp message sent successfully");
+      return response.data;
+    } catch (apiError) {
+      console.error(
+        "❌ WhatsApp API error:",
+        apiError.response?.data || apiError.message
+      );
+      throw apiError;
     }
   } catch (error) {
     console.error("Error sending WhatsApp message:", error.message);
@@ -141,23 +180,35 @@ async function sendWhatsAppMessage(message) {
  */
 async function sendArticleSummaries(articles) {
   try {
-    const message = formatMessage(articles);
+    if (!articles || articles.length === 0) {
+      console.warn("No articles to send");
+      return { status: "not_sent", reason: "no_articles" };
+    }
+
+    // Extract bullet points and links from the summary
+    const templateData = extractPointsAndSources(articles[0].summary);
+
+    if (!templateData) {
+      console.error("Failed to extract points and sources from summary");
+      return { status: "not_sent", reason: "extraction_failed" };
+    }
 
     try {
-      const result = await sendWhatsAppMessage(message);
+      const result = await sendWhatsAppMessage(templateData);
       console.log("Successfully sent EdTech trends summary via WhatsApp");
       return result;
     } catch (sendError) {
-      console.error(
-        "Failed to send via WhatsApp, but message was formatted successfully."
-      );
-      // We still return the formatted message even if sending failed
-      return { status: "format_only", formattedMessage: message };
+      console.error("Failed to send via WhatsApp API:", sendError.message);
+      return { status: "failed", error: sendError.message };
     }
   } catch (error) {
-    console.error("Error in formatting article summaries:", error.message);
+    console.error("Error processing article summaries:", error.message);
     throw error;
   }
 }
 
-module.exports = { formatMessage, sendWhatsAppMessage, sendArticleSummaries };
+module.exports = {
+  extractPointsAndSources,
+  sendWhatsAppMessage,
+  sendArticleSummaries,
+};
