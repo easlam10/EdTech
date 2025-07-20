@@ -1,5 +1,7 @@
-const axios = require("axios");
-require("dotenv").config();
+import axios from "axios";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 /**
  * Extracts bullet points and their sources from the summary
@@ -207,8 +209,4 @@ async function sendArticleSummaries(articles) {
   }
 }
 
-module.exports = {
-  extractPointsAndSources,
-  sendWhatsAppMessage,
-  sendArticleSummaries,
-};
+export { extractPointsAndSources, sendWhatsAppMessage, sendArticleSummaries };

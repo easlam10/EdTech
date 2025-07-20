@@ -1,5 +1,5 @@
-const puppeteer = require("puppeteer");
-const cheerio = require("cheerio");
+import puppeteer from "puppeteer";
+import cheerio from "cheerio";
 
 /**
  * Checks if a URL appears to be a homepage or non-article page
@@ -198,99 +198,69 @@ async function scrapeContent(url) {
     const title = $("title").text() || $("h1").first().text() || "";
 
     // Extract all text content from the page using a comprehensive approach
-    let allText = "";
+    let extractedText = "";
 
-    // First, try to identify the main article content
-    const articleSelectors = [
+    // Try multiple content extraction strategies
+    const contentSelectors = [
       "article",
       ".article",
-      ".post",
-      ".entry",
       ".content",
       "#content",
-      ".article-content",
-      ".post-content",
-      ".entry-content",
       "main",
-      "[role='main']",
-      ".main-content",
-      "#main-content",
-      ".body-content",
-      "#body-content",
+      ".post",
+      ".entry",
+      ".story",
+      ".text",
+      ".body",
     ];
 
-    let mainContent = "";
-    for (const selector of articleSelectors) {
+    // First, try to find content in specific article/content containers
+    for (const selector of contentSelectors) {
       const element = $(selector);
       if (element.length > 0) {
-        // Found a potential main content container
-        mainContent = element.text().trim();
-        if (mainContent.length > 500) {
-          // If we found substantial content, use it
-          console.log(`Found main content using selector: ${selector}`);
+        const text = element.text().trim();
+        if (text.length > 200) {
+          // Found substantial content
+          extractedText = text;
           break;
         }
       }
     }
 
-    // If we found good main content, use it; otherwise fall back to comprehensive extraction
-    if (mainContent.length > 500) {
-      allText = title + " " + mainContent;
-    } else {
-      // Comprehensive extraction approach
-      // 1. Get all paragraph text - paragraphs typically contain the main content
-      const paragraphText = $("p")
-        .map(function () {
-          return $(this).text().trim();
-        })
-        .get()
-        .join(" ");
-
-      // 2. Get text from headings which provide structure and important context
-      const headingText = $("h1, h2, h3, h4, h5, h6")
-        .map(function () {
-          return $(this).text().trim();
-        })
-        .get()
-        .join(" ");
-
-      // 3. Get text from list items which often contain important information
-      const listText = $("li")
-        .map(function () {
-          return $(this).text().trim();
-        })
-        .get()
-        .join(" ");
-
-      // 4. Get text from other common content elements
-      const otherContentText = $("article, section, main, .content, #content")
-        .map(function () {
-          // Only get text not already captured in paragraphs or direct div text
-          return $(this).clone().find("p, div").remove().end().text().trim();
-        })
-        .get()
-        .join(" ");
-
-      // Combine all the text sources
-      allText = `${title} ${headingText} ${paragraphText} ${listText} ${otherContentText}`;
+    // If no substantial content found in containers, extract from paragraphs
+    if (!extractedText || extractedText.length < 200) {
+      const paragraphs = $("p")
+        .map((_, el) => $(el).text().trim())
+        .get();
+      extractedText = paragraphs.join(" ").trim();
     }
 
-    // If we somehow got no text, fall back to body text
-    if (!allText || allText.trim().length < 50) {
-      allText = $("body").text().trim();
+    // If still no content, try extracting from all text elements
+    if (!extractedText || extractedText.length < 100) {
+      const allText = $("body").text().trim();
+      extractedText = allText;
     }
 
-    // Clean the text
-    const cleanText = cleanContent(allText);
+    // Clean and process the extracted text
+    const cleanedText = cleanContent(extractedText);
 
-    console.log(`Scraped ${cleanText.length} chars from ${url}`);
+    // Check if we have meaningful content
+    if (!cleanedText || cleanedText.length < 100) {
+      console.log(`Insufficient content extracted from: ${url}`);
+      return { content: "", publishedDate: null };
+    }
+
+    console.log(
+      `Successfully extracted ${cleanedText.length} characters from: ${url}`
+    );
 
     return {
-      content: cleanText,
+      content: cleanedText,
       publishedDate: publishedDate,
+      title: title,
     };
   } catch (error) {
-    console.error(`Error scraping content from ${url}:`, error.message);
+    console.error(`Error scraping ${url}:`, error.message);
     return { content: "", publishedDate: null };
   } finally {
     if (browser) {
@@ -300,32 +270,33 @@ async function scrapeContent(url) {
 }
 
 /**
- * Extracts publication date from common metadata tags
- * @param {Object} $ - Cheerio instance
- * @returns {string} - Publication date if found
+ * Extracts publication date from the page
+ * @param {Object} $ - Cheerio object
+ * @returns {string|null} - Publication date or null
  */
 function extractPublicationDate($) {
-  // Try to find the publication date from metadata tags
-  let dateStr =
-    $('meta[property="article:published_time"]').attr("content") ||
-    $('meta[name="pubdate"]').attr("content") ||
-    $('meta[name="publication_date"]').attr("content") ||
-    $('meta[name="date"]').attr("content");
+  // Common selectors for publication dates
+  const dateSelectors = [
+    'meta[property="article:published_time"]',
+    'meta[name="publish_date"]',
+    'meta[name="date"]',
+    'meta[name="pubdate"]',
+    'meta[name="publication_date"]',
+    "time[datetime]",
+    ".date",
+    ".published",
+    ".pubdate",
+    ".timestamp",
+  ];
 
-  // If no metadata tags, look for time elements
-  if (!dateStr) {
-    const timeEl = $("time[datetime]").first();
-    if (timeEl.length) {
-      dateStr = timeEl.attr("datetime");
-    }
-  }
-
-  if (dateStr) {
-    try {
-      const date = new Date(dateStr);
-      return date.toISOString().split("T")[0]; // Format as YYYY-MM-DD
-    } catch (e) {
-      return null;
+  for (const selector of dateSelectors) {
+    const element = $(selector);
+    if (element.length > 0) {
+      const date =
+        element.attr("content") || element.attr("datetime") || element.text();
+      if (date) {
+        return date.trim();
+      }
     }
   }
 
@@ -333,55 +304,54 @@ function extractPublicationDate($) {
 }
 
 /**
- * Cleans and formats the extracted content
+ * Cleans and processes extracted text content
  * @param {string} text - Raw extracted text
  * @returns {string} - Cleaned text
  */
 function cleanContent(text) {
+  if (!text) return "";
+
   return text
-    .replace(/(\r\n|\n|\r)/gm, " ") // Replace line breaks with spaces
-    .replace(/\s+/g, " ") // Replace multiple spaces with a single space
-    .replace(/\u00A0/g, " ") // Replace non-breaking spaces
-    .trim(); // Remove leading/trailing whitespace
+    .replace(/\s+/g, " ") // Replace multiple whitespace with single space
+    .replace(/\n+/g, " ") // Replace newlines with spaces
+    .replace(/\t+/g, " ") // Replace tabs with spaces
+    .trim();
 }
 
 /**
  * Scrapes content from multiple URLs
- * @param {Array<Object>} searchResults - Array of search result objects with URLs
- * @returns {Promise<Array<Object>>} - Array of search results with scraped content
+ * @param {Array} searchResults - Array of search result objects
+ * @returns {Promise<Array>} - Array of scraped content objects
  */
 async function scrapeMultipleUrls(searchResults) {
-  const results = [];
+  const scrapedResults = [];
 
   for (const result of searchResults) {
     try {
-      // Skip if the URL is a homepage
-      if (isHomepage(result.url)) {
-        console.log(`Skipping homepage URL: ${result.url}`);
-        continue;
-      }
+      const scrapedContent = await scrapeContent(result.url);
 
-      const { content, publishedDate } = await scrapeContent(result.url);
-
-      // Only include content that has text
-      if (content) {
-        const scrapedResult = {
-          ...result,
-          content,
-          publishedDate,
-        };
-
-        results.push(scrapedResult);
+      if (scrapedContent.content) {
+        scrapedResults.push({
+          title: result.title,
+          url: result.url,
+          content: scrapedContent.content,
+          publishedDate: scrapedContent.publishedDate || result.date,
+        });
+      } else {
+        console.log(`No content extracted from: ${result.url}`);
       }
     } catch (error) {
       console.error(`Error processing ${result.url}:`, error.message);
     }
+
+    // Add a small delay between requests to be respectful
+    await new Promise((resolve) => setTimeout(resolve, 1000));
   }
 
   console.log(
-    `Scraped content from ${results.length} URLs out of ${searchResults.length} results`
+    `Successfully scraped content from ${scrapedResults.length} URLs`
   );
-  return results;
+  return scrapedResults;
 }
 
-module.exports = { scrapeContent, scrapeMultipleUrls };
+export { scrapeMultipleUrls };

@@ -1,13 +1,13 @@
 {
   "name": "edtech-news-aggregator",
   "version": "1.0.0",
+  "type": "module",
   "description": "An automated tool that fetches, summarizes, and delivers educational technology news updates via WhatsApp",
   "main": "src/index.js",
-  "scripts": {
-    "start": "node src/index.js",
-    "dev": "nodemon src/index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
+ "scripts": {
+  "start": "node server.js",
+  "heroku-postbuild": "mkdir -p ./.cache && if [ -d /app/.cache/puppeteer ]; then mv /app/.cache/puppeteer ./.cache; fi"
+},
   "keywords": [
     "edtech",
     "news",

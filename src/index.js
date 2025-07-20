@@ -1,12 +1,14 @@
-require("dotenv").config();
-const {
+import dotenv from "dotenv";
+import {
   fetchSearchResults,
   isUrlProcessedBefore,
   markUrlAsProcessed,
-} = require("./search");
-const { scrapeMultipleUrls } = require("./scraper");
-const { processArticles } = require("./summarizer");
-const { sendArticleSummaries } = require("./messenger");
+} from "./search.js";
+import { scrapeMultipleUrls } from "./scraper.js";
+import { processArticles } from "./summarizer.js";
+import { sendArticleSummaries } from "./messenger.js";
+
+dotenv.config();
 
 /**
  * Main function to execute the entire process
@@ -99,7 +101,7 @@ async function main(
     console.log("\n=== Process completed successfully! ===");
   } catch (error) {
     console.error("Error in main process:", error.message);
-    process.exit(1);
+    throw error;
   }
 }
 
@@ -113,7 +115,7 @@ const recommendedQueries = [
 ];
 
 // Allow command line arguments for search query and number of results
-if (require.main === module) {
+if (process.argv[1] && process.argv[1].endsWith("index.js")) {
   const args = process.argv.slice(2);
   const searchQuery = args[0] || recommendedQueries[0]; // Use first recommended query as default
   const numResults = parseInt(args[1]) || 8;
@@ -125,4 +127,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { main };
+export { main };

@@ -1,5 +1,8 @@
-const axios = require("axios");
-require("dotenv").config();
+import axios from "axios";
+import dotenv from "dotenv";
+import fs from "fs/promises";
+
+dotenv.config();
 
 /**
  * Fetches search results from Google Custom Search API
@@ -133,7 +136,6 @@ async function isUrlProcessedBefore(
   url,
   cacheFilePath = "./processed_urls.json"
 ) {
-  const fs = require("fs").promises;
   try {
     // Create cache file if it doesn't exist
     let processedUrls = [];
@@ -164,7 +166,6 @@ async function markUrlAsProcessed(
   url,
   cacheFilePath = "./processed_urls.json"
 ) {
-  const fs = require("fs").promises;
   try {
     let processedUrls = [];
     try {
@@ -189,8 +190,4 @@ async function markUrlAsProcessed(
   }
 }
 
-module.exports = {
-  fetchSearchResults,
-  isUrlProcessedBefore,
-  markUrlAsProcessed,
-};
+export { fetchSearchResults, isUrlProcessedBefore, markUrlAsProcessed };
