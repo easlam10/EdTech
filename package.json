@@ -4,10 +4,10 @@
   "type": "module",
   "description": "An automated tool that fetches, summarizes, and delivers educational technology news updates via WhatsApp",
   "main": "src/index.js",
- "scripts": {
-  "start": "node server.js",
-  "heroku-postbuild": "mkdir -p ./.cache && if [ -d /app/.cache/puppeteer ]; then mv /app/.cache/puppeteer ./.cache; fi"
-},
+  "scripts": {
+    "start": "node server.js",
+    "heroku-postbuild": "mkdir -p ./.cache && if [ -d /app/.cache/puppeteer ]; then mv /app/.cache/puppeteer ./.cache; fi"
+  },
   "keywords": [
     "edtech",
     "news",
@@ -21,14 +21,17 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@google/generative-ai": "^0.2.0",
-    "axios": "^1.6.0",
+    "@google/generative-ai": "^0.24.1",  
+    "axios": "^1.9.0",                   
     "cheerio": "^1.0.0-rc.12",
-    "dotenv": "^16.3.1",
-    "puppeteer": "^21.5.0"
+    "dotenv": "^16.5.0",                 
+    "puppeteer": "^24.6.1",              
+    "express": "^4.18.2",               
+    "node-cron": "^3.0.3"                
   },
   "engines": {
-    "node": ">=14.0.0"
+    "node": "18.x",                      
+    "npm": "9.x"                         
   },
   "devDependencies": {
     "nodemon": "^3.1.10"
