@@ -82,7 +82,7 @@ async function fetchPageContent(url) {
 
     const html = await page.content();
     // Example usage of cheerio:
-    // const $ = load(html);
+    const $ = load(html);
     // ...
     return html;
   } catch (error) {

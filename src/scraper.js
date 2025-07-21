@@ -1,5 +1,5 @@
 import puppeteer from "puppeteer";
-import cheerio from "cheerio";
+import { load } from "cheerio";
 
 /**
  * Checks if a URL appears to be a homepage or non-article page
@@ -184,7 +184,7 @@ async function scrapeContent(url) {
     const content = await page.content();
 
     // Load the content into Cheerio
-    const $ = cheerio.load(content);
+    const $ = load(content);
 
     // Remove elements that don't contain useful content
     $(
