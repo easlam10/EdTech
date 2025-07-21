@@ -1,5 +1,5 @@
-const express = require("express");
-const { fetchPageContent } = require("./fetchPageContent");
+import express from "express";
+import { fetchPageContent } from "./fetchPageContent.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
