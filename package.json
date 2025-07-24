@@ -5,8 +5,8 @@
   "description": "An automated tool that fetches, summarizes, and delivers educational technology news updates via WhatsApp",
   "main": "src/index.js",
   "scripts": {
-    "start": "node server.js",
-    "heroku-postbuild": "mkdir -p ./.cache && if [ -d /app/.cache/puppeteer ]; then mv /app/.cache/puppeteer ./.cache; fi"
+    "start": "node src/index.js",
+      "heroku-postbuild": "mkdir -p ./.cache && if [ -d /app/.cache/puppeteer ]; then mv /app/.cache/puppeteer ./.cache; fi"
   },
   "keywords": [
     "edtech",
@@ -25,17 +25,18 @@
     "axios": "^1.9.0",
     "cheerio": "^1.0.0-rc.12",
     "dotenv": "^16.5.0",
+    "express": "^4.18.2",
+    "mongoose": "^8.16.4",
     "puppeteer": "^24.6.1",
     "puppeteer-extra": "^3.3.6",
     "puppeteer-extra-plugin-stealth": "^2.11.2",
-    "express": "^4.18.2",
-    "node-cron": "^3.0.3"
+    "qrcode-terminal": "^0.12.0",
+    "redis": "^5.6.0",
+    "whatsapp-web.js": "^1.31.0",
+    "wwebjs-mongo": "^1.1.0"
   },
   "engines": {
     "node": "18.x",
     "npm": "9.x"
-  },
-  "devDependencies": {
-    "nodemon": "^3.1.10"
   }
 }
