@@ -79,13 +79,14 @@ async function scrapeContent(url) {
   try {
     console.log(`Scraping content from: ${url}`);
     browser = await puppeteer.launch({
-      headless: "new",
+      headless: true,
       args: [
         "--no-sandbox",
         "--disable-setuid-sandbox",
         "--disable-gpu",
         "--disable-dev-shm-usage",
       ],
+      ignoreDefaultArgs: ["--disable-extensions"],
       timeout: 60000, // Increase browser launch timeout
     });
 

@@ -1,0 +1,42 @@
+# Git files
+.git/
+.gitignore
+
+# Node.js
+node_modules/
+npm-debug.log
+
+# Testing
+coverage/
+tests/
+__tests__/
+test/
+
+# Documentation
+docs/
+*.md
+!README.md
+!RAILWAY.md
+
+# Editor/IDE specific files
+.idea/
+.vscode/
+*.sublime-*
+.DS_Store
+
+# Logs
+logs/
+*.log
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Build artifacts that are not needed
+*.tsbuildinfo
+.cache/
+
+# Large files not needed for deployment
+*.zip
+*.tar.gz 
