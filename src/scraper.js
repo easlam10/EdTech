@@ -78,7 +78,11 @@ async function scrapeContent(url) {
 
   try {
     console.log(`Scraping content from: ${url}`);
-    browser = await puppeteer.launch({
+
+    // Check if running on Render (they provide this env var)
+    const isOnRender = process.env.RENDER === "true";
+
+    const puppeteerOptions = {
       headless: true,
       args: [
         "--no-sandbox",
@@ -88,7 +92,17 @@ async function scrapeContent(url) {
       ],
       ignoreDefaultArgs: ["--disable-extensions"],
       timeout: 60000, // Increase browser launch timeout
-    });
+    };
+
+    // Add Render-specific configuration
+    if (isOnRender) {
+      console.log("Running on Render, using Render-specific Puppeteer config");
+      puppeteerOptions.executablePath =
+        process.env.PUPPETEER_EXECUTABLE_PATH ||
+        "/opt/render/.cache/puppeteer/chrome/linux-119.0.6045.105/chrome-linux64/chrome";
+    }
+
+    browser = await puppeteer.launch(puppeteerOptions);
 
     const page = await browser.newPage();
 

@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: edtech-news-aggregator
+    env: node
+    buildCommand: ./render-build.sh
+    startCommand: node src/index.js
+    envVars:
+      - key: NODE_VERSION
+        value: 18
+      - key: PUPPETEER_SKIP_CHROMIUM_DOWNLOAD
+        value: "true"
+      - key: PUPPETEER_EXECUTABLE_PATH
+        value: "/opt/render/.cache/puppeteer/chrome/linux-119.0.6045.105/chrome-linux64/chrome"
