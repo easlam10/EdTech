@@ -79,15 +79,15 @@ async function scrapeContent(url) {
   try {
     console.log(`Scraping content from: ${url}`);
     browser = await puppeteer.launch({
-      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/app/.cache/puppeteer/chrome-headless-shell-linux64/chrome-headless-shell',
-      headless: "new",
-      args: [
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-        "--disable-gpu",            // Additional optimizations
-        "--disable-dev-shm-usage",  // Helps with limited memory
-        "--single-process"          // Reduces memory usage
-      ],
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || 
+      '/app/.cache/puppeteer/chrome/linux-*/chrome-linux64/chrome',
+    headless: "new",
+    args: [
+      "--no-sandbox",
+      "--disable-setuid-sandbox",
+      "--disable-gpu",
+      "--disable-dev-shm-usage"
+    ],
       timeout: 60000
     });
 
