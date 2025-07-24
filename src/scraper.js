@@ -79,16 +79,14 @@ async function scrapeContent(url) {
   try {
     console.log(`Scraping content from: ${url}`);
     browser = await puppeteer.launch({
-      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || 
-      '/app/.cache/puppeteer/chrome/linux-*/chrome-linux64/chrome',
-    headless: "new",
-    args: [
-      "--no-sandbox",
-      "--disable-setuid-sandbox",
-      "--disable-gpu",
-      "--disable-dev-shm-usage"
-    ],
-      timeout: 60000
+      headless: "new",
+      args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-gpu",
+        "--disable-dev-shm-usage",
+      ],
+      timeout: 60000, // Increase browser launch timeout
     });
 
     const page = await browser.newPage();

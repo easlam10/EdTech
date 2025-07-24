@@ -1,6 +1,10 @@
-# Keep only the specific Chrome version needed
-.cache/puppeteer/*
-!/.cache/puppeteer/chrome/linux-*/chrome-linux64/chrome
+node_modules/whatsapp-web.js/docs/
+node_modules/whatsapp-web.js/src/
+node_modules/whatsapp-web.js/.github/
+node_modules/**/test/
+node_modules/**/tests/
+node_modules/**/examples/
+node_modules/**/docs/
 
 # WhatsApp session files (store in DB instead)
 session/
