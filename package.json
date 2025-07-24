@@ -6,7 +6,8 @@
   "main": "src/index.js",
   "scripts": {
     "start": "node server.js",
-    "heroku-postbuild": "mkdir -p ./.cache && if [ -d /app/.cache/puppeteer ]; then mv /app/.cache/puppeteer ./.cache; fi"
+   "heroku-postbuild": "npm install --omit=dev && mkdir -p .cache && mv /app/.cache/puppeteer/chrome-headless-shell .cache/puppeteer/",
+  "cleanup": "rm -rf .cache/puppeteer/chrome-*"
   },
   "keywords": [
     "edtech",
