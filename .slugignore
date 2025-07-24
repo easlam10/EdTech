@@ -1,10 +1,32 @@
+# WhatsApp Web.js - keep only the essential dist files
+node_modules/whatsapp-web.js/src/
+node_modules/whatsapp-web.js/docs/
+node_modules/whatsapp-web.js/.github/
+node_modules/whatsapp-web.js/node_modules/puppeteer-core/docs/
+node_modules/whatsapp-web.js/node_modules/puppeteer-core/test/
+
+# Remove all tests and examples from all modules
+**/test/
+**/tests/
+**/__tests__/
+**/example/
+**/examples/
+**/benchmark/
+**/coverage/
+*.test.js
+*.spec.js
+
+# Documentation files
+**/docs/
+**/doc/
+**/CHANGELOG*
+**/CONTRIBUTING*
+**/HISTORY*
+**/README*
+**/*.md
+**/*.markdown
+
 # Development files
-*.md
-*.markdown
-*.txt
-*.log
-*.yml
-*.yaml
 .editorconfig
 .gitattributes
 .gitignore
@@ -19,50 +41,6 @@
 *.temp
 *.orig
 
-# Test files
-/test/
-/tests/
-/example/
-/examples/
-/benchmark/
-/benchmarks/
-/coverage/
-__tests__/
-*.test.js
-*.spec.js
-
-# Documentation
-/docs/
-/doc/
-.github/
-CHANGELOG*
-CONTRIBUTING*
-HISTORY*
-LICENSE*
-README*
-
-# WhatsApp Web.js specific exclusions (preserving needed files)
-node_modules/whatsapp-web.js/docs/
-node_modules/whatsapp-web.js/src/
-node_modules/whatsapp-web.js/.github/
-node_modules/whatsapp-web.js/node_modules/puppeteer-core/docs/
-node_modules/whatsapp-web.js/node_modules/puppeteer-core/test/
-node_modules/whatsapp-web.js/node_modules/puppeteer-core/.github/
-
-# General node_modules exclusions (careful not to break Puppeteer)
-node_modules/**/test/
-node_modules/**/tests/
-node_modules/**/example/
-node_modules/**/examples/
-node_modules/**/doc/
-node_modules/**/docs/
-node_modules/**/benchmark/
-node_modules/**/coverage/
-
-# Development dependencies (if any get installed)
-node_modules/.bin/
-node_modules/.cache/
-
 # Source maps
 *.map
 
@@ -76,7 +54,7 @@ node_modules/.cache/
 .DS_Store
 Thumbs.db
 
-# Media files - unlikely needed
+# Media files
 *.png
 *.jpg
 *.jpeg
@@ -87,3 +65,11 @@ Thumbs.db
 *.mp4
 *.wav
 *.mov
+
+# Remove unnecessary large files from fluent-ffmpeg
+node_modules/fluent-ffmpeg/coverage/
+
+# Remove duplicate chromium installations (keep only the one in .cache/puppeteer)
+node_modules/whatsapp-web.js/node_modules/puppeteer-core/.local-chromium/
+node_modules/puppeteer-core/.local-chromium/
+node_modules/puppeteer/.local-chromium/
