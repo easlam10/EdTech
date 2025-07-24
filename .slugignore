@@ -1,39 +1,89 @@
+# Development files
+*.md
+*.markdown
+*.txt
+*.log
+*.yml
+*.yaml
+.editorconfig
+.gitattributes
+.gitignore
+.eslint*
+.prettier*
+*.sample
+*.example
+*.bak
+*.backup
+*.swp
+*.tmp
+*.temp
+*.orig
+
+# Test files
+/test/
+/tests/
+/example/
+/examples/
+/benchmark/
+/benchmarks/
+/coverage/
+__tests__/
+*.test.js
+*.spec.js
+
+# Documentation
+/docs/
+/doc/
+.github/
+CHANGELOG*
+CONTRIBUTING*
+HISTORY*
+LICENSE*
+README*
+
+# WhatsApp Web.js specific exclusions (preserving needed files)
 node_modules/whatsapp-web.js/docs/
 node_modules/whatsapp-web.js/src/
 node_modules/whatsapp-web.js/.github/
+node_modules/whatsapp-web.js/node_modules/puppeteer-core/docs/
+node_modules/whatsapp-web.js/node_modules/puppeteer-core/test/
+node_modules/whatsapp-web.js/node_modules/puppeteer-core/.github/
+
+# General node_modules exclusions (careful not to break Puppeteer)
 node_modules/**/test/
 node_modules/**/tests/
+node_modules/**/example/
 node_modules/**/examples/
+node_modules/**/doc/
 node_modules/**/docs/
+node_modules/**/benchmark/
+node_modules/**/coverage/
 
-# WhatsApp session files (store in DB instead)
-session/
-auth_info.json
-*.session
-*.session-journal
+# Development dependencies (if any get installed)
+node_modules/.bin/
+node_modules/.cache/
 
-# Node.js - keep only production node_modules
-node_modules/
-!node_modules/
+# Source maps
+*.map
 
-# Development artifacts
-test/
-coverage/
-dist/
-docs/
-*.log
-npm-debug.log*
-
-# Environment files
-.env
-.env.*
+# IDE files
 .idea/
 .vscode/
+*.swp
+*.swo
 
-# Large media files
-*.psd
-*.avi
-*.mov
+# OS files
+.DS_Store
+Thumbs.db
+
+# Media files - unlikely needed
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+*.ico
+*.mp3
 *.mp4
-*.zip
-*.pdf
+*.wav
+*.mov
