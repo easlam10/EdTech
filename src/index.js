@@ -6,7 +6,7 @@ import {
 } from "./search.js";
 import { scrapeMultipleUrls } from "./scraper.js";
 import { processArticles } from "./summarizer.js";
-import whatsappWebService from "./whatsappWebService.js";
+
 
 dotenv.config();
 
@@ -26,10 +26,6 @@ async function main(
       `Starting the process with query: "${searchQuery}", looking at past ${daysAgo} day(s)`
     );
     console.log(`Date: ${new Date().toLocaleDateString()}`);
-
-    // Initialize WhatsApp Web service at the beginning
-    console.log("Initializing WhatsApp Web connection...");
-    await whatsappWebService.initialize();
 
     // Step 1: Fetch search results from Google Custom Search API
     console.log("\n=== STEP 1: Fetching search results ===");
@@ -93,51 +89,19 @@ async function main(
     );
 
     // Mark URLs as processed after successful processing
-    for (const result of scrapedResults) {
-      await markUrlAsProcessed(result.url);
-      console.log(`Marked as processed: ${result.url}`);
+    for (const article of processedArticles) {
+      await markUrlAsProcessed(article.url);
+      console.log(`Marked as processed: ${article.url}`);
     }
 
-    // Step 4: Send the combined summaries via WhatsApp Web
-    console.log("\n=== STEP 4: Sending summaries via WhatsApp Web ===");
-
-    // Format the message
-    const today = new Date();
-    const dateFormatted = today.toLocaleDateString("en-US", {
-      weekday: "long",
-      month: "long",
-      day: "numeric",
-      year: "numeric",
-    });
-
-    // Get the summary text from the first article (consolidated summary)
-    const summaryText =
-      processedArticles[0]?.summary || "No summaries generated.";
-
-    // Format the WhatsApp message with a header
-    const message = `📱 *EDTECH UPDATE* 📱\n*${dateFormatted}*\n\n${summaryText}`;
-
-    // Get recipient number from environment variable
-    const recipientNumber = process.env.DEFAULT_RECIPIENT_NUMBER;
-
-    if (!recipientNumber) {
-      console.error(
-        "DEFAULT_RECIPIENT_NUMBER not set in environment variables!"
-      );
-      return;
-    }
-
-    // Send the message
-    await whatsappWebService.sendMessage(recipientNumber, message);
-    console.log(`WhatsApp message sent to ${recipientNumber}`);
+    // // Step 4: Send the combined summaries via WhatsApp
+    // console.log("\n=== STEP 4: Sending summaries via WhatsApp ===");
+    // await sendArticleSummaries(processedArticles);
 
     console.log("\n=== Process completed successfully! ===");
-
-    // Optional: Exit the process after completion
-    process.exit(0);
   } catch (error) {
     console.error("Error in main process:", error.message);
-    process.exit(1);
+    throw error;
   }
 }
 
