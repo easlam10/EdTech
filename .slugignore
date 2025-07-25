@@ -1,7 +1,3 @@
-# Remove ALL Chrome versions except headless-shell
-.cache/puppeteer/chrome
-.cache/puppeteer/chrome-*
-!/.cache/puppeteer/chrome-headless-shell
 
 # WhatsApp session files (store in DB instead)
 session/

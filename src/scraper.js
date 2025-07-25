@@ -79,10 +79,9 @@ async function scrapeContent(url) {
   try {
     console.log(`Scraping content from: ${url}`);
     browser = await puppeteer.launch({
-      args: ["--no-sandbox"],
-      executablePath:
-        "/app/.cache/puppeteer/chrome-headless-shell/chrome-headless-shell",
-      headless: true,
+      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+      executablePath: "/app/node_modules/whatsapp-web.js/node_modules/puppeteer-core/.local-chromium/linux-1045629/chrome-linux/chrome",
+      headless: true
     });
 
     const page = await browser.newPage();

@@ -7,8 +7,7 @@
   "scripts": {
     "start": "node src/index.js",
    "scripts": {
-  "heroku-postbuild": "npm install --omit=dev && mkdir -p ./.cache && mv /app/.cache/puppeteer ./.cache",
-  "cleanup": "rm -rf .cache/puppeteer/chrome-*"
+    "heroku-postbuild": "npm install --omit=dev"
 }
   },
   "keywords": [
