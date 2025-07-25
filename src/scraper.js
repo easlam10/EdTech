@@ -79,14 +79,10 @@ async function scrapeContent(url) {
   try {
     console.log(`Scraping content from: ${url}`);
     browser = await puppeteer.launch({
-      headless: "new",
-      args: [
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-        "--disable-gpu",
-        "--disable-dev-shm-usage",
-      ],
-      timeout: 60000, // Increase browser launch timeout
+      args: ["--no-sandbox"],
+      executablePath:
+        "/app/.cache/puppeteer/chrome-headless-shell/chrome-headless-shell",
+      headless: true,
     });
 
     const page = await browser.newPage();
