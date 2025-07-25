@@ -69,203 +69,71 @@ function isHomepage(url) {
  * @returns {Promise<Object>} - The extracted text content and metadata
  */
 async function scrapeContent(url) {
-  // Skip homepages
-  if (isHomepage(url)) {
-    return { content: "", publishedDate: null };
-  }
-
   let browser = null;
-
+  
   try {
     console.log(`Scraping content from: ${url}`);
+    
+    // Use the same launch config that worked before
     browser = await puppeteer.launch({
-      headless: "new",
       args: [
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-        "--disable-gpu",
-        "--disable-dev-shm-usage",
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--single-process'
       ],
-      timeout: 60000, // Increase browser launch timeout
+      headless: 'new',
+      timeout: 60000
     });
 
     const page = await browser.newPage();
-
-    // Increase timeout for navigation
     await page.setDefaultNavigationTimeout(60000);
-
-    // Block unnecessary resources to speed up loading
+    
+    // Simplified request interception
     await page.setRequestInterception(true);
-    page.on("request", (request) => {
-      const resourceType = request.resourceType();
-      if (["image", "stylesheet", "font", "media"].includes(resourceType)) {
-        request.abort();
+    page.on('request', (req) => {
+      if (['image', 'stylesheet', 'font'].includes(req.resourceType())) {
+        req.abort();
       } else {
-        request.continue();
+        req.continue();
       }
     });
 
-    // Set user agent to avoid being blocked
-    await page.setUserAgent(
-      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-    );
+    // Set user agent
+    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36');
 
-    // Navigate to the URL with retry mechanism
-    let response = null;
-    let attempts = 0;
-    const maxAttempts = 3;
-
-    while (!response && attempts < maxAttempts) {
+    // Navigation with retries
+    let response;
+    for (let attempt = 0; attempt < 3; attempt++) {
       try {
-        attempts++;
-        console.log(`Attempt ${attempts} to load ${url}`);
-
-        // Set a shorter timeout for each attempt
-        const navigationTimeout = 30000;
-        response = await Promise.race([
-          page.goto(url, { waitUntil: "domcontentloaded" }),
-          new Promise((_, reject) =>
-            setTimeout(
-              () =>
-                reject(
-                  new Error(`Navigation timeout after ${navigationTimeout}ms`)
-                ),
-              navigationTimeout
-            )
-          ),
-        ]);
-
-        // If we get here, navigation succeeded
+        response = await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
         break;
-      } catch (navigationError) {
-        console.warn(
-          `Navigation attempt ${attempts} failed: ${navigationError.message}`
-        );
-
-        if (attempts >= maxAttempts) {
-          console.error(
-            `Failed to load page after ${maxAttempts} attempts: ${url}`
-          );
-          return { content: "", publishedDate: null };
-        }
-
-        // Wait before retrying
-        await new Promise((resolve) => setTimeout(resolve, 2000));
+      } catch (err) {
+        console.warn(`Attempt ${attempt + 1} failed: ${err.message}`);
+        if (attempt === 2) throw err;
+        await new Promise(r => setTimeout(r, 2000));
       }
     }
 
-    // Check if the page loaded successfully
-    if (!response || (response.status && response.status() !== 200)) {
-      console.error(
-        `Failed to load page: ${url}, status: ${
-          response ? response.status() : "unknown"
-        }`
-      );
-      return { content: "", publishedDate: null };
-    }
-
-    // Wait for content to load
-    try {
-      await page
-        .waitForSelector("p, article, .article, .content, #content, main", {
-          timeout: 5000,
-        })
-        .catch(() =>
-          console.log("No common content selectors found, proceeding anyway")
-        );
-    } catch (timeoutError) {
-      // Continue anyway, we'll try to extract whatever content is available
-      console.log(
-        "Timed out waiting for content selectors, proceeding with extraction anyway"
-      );
-    }
-
-    // Get the page content
+    // Basic content extraction
     const content = await page.content();
-
-    // Load the content into Cheerio
     const $ = load(content);
+    
+    // Remove unwanted elements
+    $('script, style, nav, footer, iframe').remove();
+    
+    // Get main content
+    let text = $('body').text()
+      .replace(/\s+/g, ' ')
+      .trim();
 
-    // Remove elements that don't contain useful content
-    $(
-      "script, style, nav, footer, header, aside, .sidebar, .footer, .header, .nav, .menu, .ad, .ads, .advertisement, .cookie, .popup"
-    ).remove();
+    return { content: text, publishedDate: null };
 
-    // Extract publication date if available
-    const publishedDate = extractPublicationDate($);
-
-    // Extract title for context
-    const title = $("title").text() || $("h1").first().text() || "";
-
-    // Extract all text content from the page using a comprehensive approach
-    let extractedText = "";
-
-    // Try multiple content extraction strategies
-    const contentSelectors = [
-      "article",
-      ".article",
-      ".content",
-      "#content",
-      "main",
-      ".post",
-      ".entry",
-      ".story",
-      ".text",
-      ".body",
-    ];
-
-    // First, try to find content in specific article/content containers
-    for (const selector of contentSelectors) {
-      const element = $(selector);
-      if (element.length > 0) {
-        const text = element.text().trim();
-        if (text.length > 200) {
-          // Found substantial content
-          extractedText = text;
-          break;
-        }
-      }
-    }
-
-    // If no substantial content found in containers, extract from paragraphs
-    if (!extractedText || extractedText.length < 200) {
-      const paragraphs = $("p")
-        .map((_, el) => $(el).text().trim())
-        .get();
-      extractedText = paragraphs.join(" ").trim();
-    }
-
-    // If still no content, try extracting from all text elements
-    if (!extractedText || extractedText.length < 100) {
-      const allText = $("body").text().trim();
-      extractedText = allText;
-    }
-
-    // Clean and process the extracted text
-    const cleanedText = cleanContent(extractedText);
-
-    // Check if we have meaningful content
-    if (!cleanedText || cleanedText.length < 100) {
-      console.log(`Insufficient content extracted from: ${url}`);
-      return { content: "", publishedDate: null };
-    }
-
-    console.log(
-      `Successfully extracted ${cleanedText.length} characters from: ${url}`
-    );
-
-    return {
-      content: cleanedText,
-      publishedDate: publishedDate,
-      title: title,
-    };
   } catch (error) {
     console.error(`Error scraping ${url}:`, error.message);
     return { content: "", publishedDate: null };
   } finally {
-    if (browser) {
-      await browser.close();
-    }
+    if (browser) await browser.close();
   }
 }
 
