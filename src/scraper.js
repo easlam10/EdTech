@@ -82,6 +82,7 @@ async function scrapeContent(url) {
         '--disable-dev-shm-usage',
         '--single-process'
       ],
+      executablePath: '/app/node_modules/whatsapp-web.js/node_modules/puppeteer-core/.local-chromium/linux-*/chrome-linux/chrome',
       headless: 'new',
       timeout: 60000
     });
